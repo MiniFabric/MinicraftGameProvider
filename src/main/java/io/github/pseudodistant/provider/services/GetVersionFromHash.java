@@ -4,6 +4,7 @@ import net.fabricmc.loader.impl.util.version.StringVersion;
 
 public class GetVersionFromHash {
     public static StringVersion getVersionFromHash(String hash) {
+        //TODO: Replace this method with a proper pre-load version getter (Could replace the one in MiniEntrypointPatch
         String gameVersion = switch(hash) {
             case "f211b7cbfb31584af3cdce35f874fe0a" -> "1.9.1";
             case "999940dbb17877e6bc6231476494dc26" -> "1.9.2";
