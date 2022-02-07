@@ -21,7 +21,7 @@ public class GetVersionFromHash {
             default -> "0.0.0";
         };
         if (!gameVersion.equals("0.0.0")) {
-            MinicraftGameProvider.setIsPlus();
+            MinicraftGameProvider.setGameType(2);
         }
         return new StringVersion(gameVersion);
     }

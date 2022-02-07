@@ -33,7 +33,13 @@ public class MiniEntrypointPatch extends GamePatch {
             if (!try202Version(mainClass)) {
                 ClassNode titleMenuNode = readClass(classSource.apply("minicraft.screen.TitleMenu"));
                 ClassNode oldTitleMenuNode = readClass(classSource.apply("com.mojang.ld22.screen.TitleMenu"));
-                try193Version(titleMenuNode == null ? oldTitleMenuNode : titleMenuNode);
+                if (titleMenuNode != null) {
+                    try193Version(titleMenuNode);
+                } else if (oldTitleMenuNode != null) {
+                    try193Version(oldTitleMenuNode);
+                } else {
+                    tryDeluxVersion(mainClass);
+                }
             }
             initMethod = findMethod(mainClass, (method) -> method.name.equals("init") && method.desc.equals("()V"));
         } else {
@@ -66,7 +72,7 @@ public class MiniEntrypointPatch extends GamePatch {
                         if (value instanceof String) {
                             if (((String) value).contains(".")) {
                                 MinicraftGameProvider.setGameVersion(new StringVersion((String)value));
-                                MinicraftGameProvider.setIsPlus();
+                                MinicraftGameProvider.setGameType(2);
                                 return true;
                             }
                         }
@@ -85,7 +91,29 @@ public class MiniEntrypointPatch extends GamePatch {
                         Object value = ldcInsnNode.cst;
                         if ((value.toString()).contains("VER")) {
                             MinicraftGameProvider.setGameVersion(new StringVersion(((String) value).replace("VERSION ", "")));
-                            MinicraftGameProvider.setIsPlus();
+                            MinicraftGameProvider.setGameType(2);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean tryDeluxVersion(ClassNode mainClass) {
+        for (MethodNode method : mainClass.methods) {
+            if (method.name.equals("<clinit>")) {
+                for (AbstractInsnNode instruction : method.instructions) {
+                    if (instruction instanceof LdcInsnNode ldcInsnNode) {
+                        Object value = ldcInsnNode.cst;
+                        if ((value.toString()).contains("1.")) {
+                            String charCount = value.toString().replace(".", "");
+                            if (value.toString().length() - charCount.length() == 1) {
+                                value += ".0";
+                            }
+                            MinicraftGameProvider.setGameVersion(new StringVersion((String) value));
+                            MinicraftGameProvider.setGameType(1);
                             return true;
                         }
                     }
@@ -107,7 +135,7 @@ public class MiniEntrypointPatch extends GamePatch {
                                 version = version.replace("-dev4", "");
                             }
                             MinicraftGameProvider.setGameVersion(new StringVersion(version));
-                            MinicraftGameProvider.setIsPlus();
+                            MinicraftGameProvider.setGameType(2);
                             return true;
                         }
                     }

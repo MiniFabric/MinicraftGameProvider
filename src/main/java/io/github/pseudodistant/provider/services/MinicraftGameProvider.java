@@ -23,7 +23,7 @@ import java.util.zip.ZipFile;
 
 public class MinicraftGameProvider implements GameProvider {
 
-	private static final String[] ENTRYPOINTS = new String[]{"com.mojang.ld22.Game", "minicraft.core.Game", "minicraft.Game"};
+	private static final String[] ENTRYPOINTS = new String[]{"com.mojang.ld22.Game", "com.mojang.ld22.GameControl", "minicraft.core.Game", "minicraft.Game"};
 	private static final Set<String> SENSITIVE_ARGS = new HashSet<>(Arrays.asList(
 			// all lowercase without --
 			"savedir",
@@ -36,7 +36,7 @@ public class MinicraftGameProvider implements GameProvider {
 	private Path libDir;
 	private Path gameJar;
 	private boolean development = false;
-	private static boolean isPlus = false;
+	private static int gameType = 0;
 	private final List<Path> miscGameLibraries = new ArrayList<>();
 	private static StringVersion gameVersion;
 	
@@ -46,12 +46,20 @@ public class MinicraftGameProvider implements GameProvider {
 	
 	@Override
 	public String getGameId() {
-		return isPlus ? "minicraftplus" : "minicraft";
+		return switch (gameType) {
+			default -> "minicraft";
+			case 1 -> "minicraft-delux";
+			case 2 -> "minicraftplus";
+		}; // isPlus ? "minicraftplus" : "minicraft";
 	}
 
 	@Override
 	public String getGameName() {
-		return isPlus ? "MinicraftPlus" : "Minicraft";
+		return switch (gameType) {
+			default -> "Minicraft";
+			case 1 -> "Minicraft Delux";
+			case 2 -> "MinicraftPlus";
+		};//isPlus ? "MinicraftPlus" : "Minicraft";
 	}
 
 	@Override
@@ -70,6 +78,10 @@ public class MinicraftGameProvider implements GameProvider {
 		HashMap<String, String> minicraftContactInformation = new HashMap<>();
 		minicraftContactInformation.put("homepage", "https://en.wikipedia.org/wiki/Minicraft");
 
+		HashMap<String, String> minicraftDeluxContactInformation = new HashMap<>();
+		minicraftDeluxContactInformation.put("homepage", "https://playminicraft.com/");
+		minicraftDeluxContactInformation.put("wiki", "Lost to time and space...");
+
 		HashMap<String, String> minicraftPlusContactInformation = new HashMap<>();
 		minicraftPlusContactInformation.put("homepage", "https://playminicraft.com/");
 		minicraftPlusContactInformation.put("wiki", "https://github.com/chrisj42/minicraft-plus-revived/wiki");
@@ -83,6 +95,13 @@ public class MinicraftGameProvider implements GameProvider {
 				.setContact(new ContactInformationImpl(minicraftContactInformation))
 				.setDescription("A 2D top-down action game designed and programmed by Markus Persson, the creator of Minecraft, for a Ludum Dare, a 48-hour game programming competition.");
 
+		BuiltinModMetadata.Builder minicraftDeluxMetaData =
+				new BuiltinModMetadata.Builder(getGameId(), getNormalizedGameVersion())
+						.setName(getGameName())
+						.addAuthor("Samuel Werder", minicraftDeluxContactInformation)
+						.setContact(new ContactInformationImpl(minicraftDeluxContactInformation))
+						.setDescription("A modded version of Minicraft made by Samuel Werder, adding a saves system, a respawn mechanic, an in-game map, working terrain height, stairs, new monsters, a day/night cycle, and more!");
+
 		BuiltinModMetadata.Builder minicraftPlusMetaData =
 				new BuiltinModMetadata.Builder(getGameId(), getNormalizedGameVersion())
 				.setName(getGameName())
@@ -90,7 +109,12 @@ public class MinicraftGameProvider implements GameProvider {
 				.setContact(new ContactInformationImpl(minicraftPlusContactInformation))
 				.setDescription("Minicraft+ is a modded version of Minicraft that adds many more features to the original version. The original Minicraft game was made by Markus 'Notch' Persson in the Ludum Dare 22 contest.");
 
-		return isPlus ? Collections.singletonList(new BuiltinMod(Collections.singletonList(gameJar), minicraftPlusMetaData.build())) : Collections.singletonList(new BuiltinMod(Collections.singletonList(gameJar), minicraftMetaData.build()));
+		return switch (gameType) {
+			default -> Collections.singletonList(new BuiltinMod(Collections.singletonList(gameJar), minicraftMetaData.build()));
+			case 1 -> Collections.singletonList(new BuiltinMod(Collections.singletonList(gameJar), minicraftDeluxMetaData.build()));
+			case 2 -> Collections.singletonList(new BuiltinMod(Collections.singletonList(gameJar), minicraftPlusMetaData.build()));
+		};
+		// isPlus ? Collections.singletonList(new BuiltinMod(Collections.singletonList(gameJar), minicraftPlusMetaData.build())) : Collections.singletonList(new BuiltinMod(Collections.singletonList(gameJar), minicraftMetaData.build()));
 	}
 
 	@Override
@@ -260,8 +284,8 @@ public class MinicraftGameProvider implements GameProvider {
 		}
 	}
 
-	public static void setIsPlus() {
-		isPlus = true;
+	public static void setGameType(int type) {
+		gameType = type;
 	}
 
 	private StringVersion getGameVersion() {
