@@ -19,31 +19,19 @@ import java.util.function.Function;
 
 public class MiniEntrypointPatch extends GamePatch {
     @Override
-    public void process(FabricLauncher launcher, Function<String, ClassReader> classSource, Consumer<ClassNode> classEmitter) {
+    public void process(FabricLauncher launcher, Function<String, ClassNode> classSource, Consumer<ClassNode> classEmitter) {
         String entrypoint = launcher.getEntrypoint();
         if (!entrypoint.startsWith("com.mojang.") && !entrypoint.startsWith("minicraft.")) {
             return;
         }
-        ClassNode mainClass = readClass(classSource.apply(entrypoint));
-        ClassNode plusInitializer = readClass(classSource.apply("minicraft.core.Initializer"));
+        ClassNode mainClass = classSource.apply(entrypoint);
+        ClassNode plusInitializer = classSource.apply("minicraft.core.Initializer");
 
         MethodNode initMethod;
 
         if (plusInitializer == null) {
-            if (!try202Version(mainClass)) {
-                ClassNode titleMenuNode = readClass(classSource.apply("minicraft.screen.TitleMenu"));
-                ClassNode oldTitleMenuNode = readClass(classSource.apply("com.mojang.ld22.screen.TitleMenu"));
-                if (titleMenuNode != null) {
-                    try193Version(titleMenuNode);
-                } else if (oldTitleMenuNode != null) {
-                    try193Version(oldTitleMenuNode);
-                } else {
-                    tryDeluxVersion(mainClass);
-                }
-            }
             initMethod = findMethod(mainClass, (method) -> method.name.equals("init") && method.desc.equals("()V"));
         } else {
-            tryLatestVersion(mainClass);
             initMethod = findMethod(plusInitializer, (method) -> method.name.equals("run") && method.desc.equals("()V"));
         }
 
@@ -61,87 +49,5 @@ public class MiniEntrypointPatch extends GamePatch {
             classEmitter.accept(plusInitializer);
 
         }
-    }
-
-    private boolean tryLatestVersion(ClassNode mainClass) {
-        for (MethodNode method : mainClass.methods) {
-            if (method.name.equals("<clinit>")) {
-                for (AbstractInsnNode instruction : method.instructions) {
-                    if (instruction instanceof LdcInsnNode ldcInsnNode) {
-                        Object value = ldcInsnNode.cst;
-                        if (value instanceof String) {
-                            if (((String) value).contains(".")) {
-                                MinicraftGameProvider.setGameVersion(new StringVersion((String)value));
-                                MinicraftGameProvider.setGameType(2);
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean try202Version(ClassNode mainClass) {
-        for (MethodNode method : mainClass.methods) {
-            if (method.name.equals("<clinit>")) {
-                for (AbstractInsnNode instruction : method.instructions) {
-                    if (instruction instanceof LdcInsnNode ldcInsnNode) {
-                        Object value = ldcInsnNode.cst;
-                        if ((value.toString()).contains("VER")) {
-                            MinicraftGameProvider.setGameVersion(new StringVersion(((String) value).replace("VERSION ", "")));
-                            MinicraftGameProvider.setGameType(2);
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean tryDeluxVersion(ClassNode mainClass) {
-        for (MethodNode method : mainClass.methods) {
-            if (method.name.equals("<clinit>")) {
-                for (AbstractInsnNode instruction : method.instructions) {
-                    if (instruction instanceof LdcInsnNode ldcInsnNode) {
-                        Object value = ldcInsnNode.cst;
-                        if ((value.toString()).contains("1.")) {
-                            String charCount = value.toString().replace(".", "");
-                            if (value.toString().length() - charCount.length() == 1) {
-                                value += ".0";
-                            }
-                            MinicraftGameProvider.setGameVersion(new StringVersion((String) value));
-                            MinicraftGameProvider.setGameType(1);
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean try193Version(ClassNode mainClass) {
-        for (MethodNode method : mainClass.methods) {
-            if (method.name.equals("render")) {
-                for (AbstractInsnNode instruction : method.instructions) {
-                    if (instruction instanceof LdcInsnNode ldcInsnNode) {
-                        Object value = ldcInsnNode.cst;
-                        if ((value.toString()).contains("Ver")) {
-                            String version = ((String) value).replace("Version ", "");
-                            if (version.contains("2.0.0-dev4")) {
-                                version = version.replace("-dev4", "");
-                            }
-                            MinicraftGameProvider.setGameVersion(new StringVersion(version));
-                            MinicraftGameProvider.setGameType(2);
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
     }
 }

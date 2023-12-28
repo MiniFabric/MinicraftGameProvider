@@ -1,7 +1,8 @@
 package io.github.pseudodistant.provider.services;
 
 import io.github.pseudodistant.provider.patch.MiniEntrypointPatch;
-import io.github.pseudodistant.provider.patch.MinicraftPatch;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
 import net.fabricmc.loader.impl.FormattedException;
 import net.fabricmc.loader.impl.game.GameProvider;
 import net.fabricmc.loader.impl.game.GameProviderHelper;
@@ -11,14 +12,23 @@ import net.fabricmc.loader.impl.metadata.BuiltinModMetadata;
 import net.fabricmc.loader.impl.metadata.ContactInformationImpl;
 import net.fabricmc.loader.impl.util.Arguments;
 import net.fabricmc.loader.impl.util.SystemProperties;
+import net.fabricmc.loader.impl.util.log.Log;
+import net.fabricmc.loader.impl.util.log.LogCategory;
+import net.fabricmc.loader.impl.util.log.LogLevel;
 import net.fabricmc.loader.impl.util.version.StringVersion;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.*;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class MinicraftGameProvider implements GameProvider {
@@ -38,10 +48,9 @@ public class MinicraftGameProvider implements GameProvider {
 	private boolean development = false;
 	private static int gameType = 0;
 	private final List<Path> miscGameLibraries = new ArrayList<>();
-	private static StringVersion gameVersion;
+	private static Version gameVersion;
 	
 	private static final GameTransformer TRANSFORMER = new GameTransformer(
-			new MinicraftPatch(),
 			new MiniEntrypointPatch());
 	
 	@Override
@@ -186,20 +195,56 @@ public class MinicraftGameProvider implements GameProvider {
 		processArgumentMap(arguments);
 
 		try {
-			String Md5 = GetMD5FromJar.getMD5Checksum(gameJar.toString());
-			gameVersion = GetVersionFromHash.getVersionFromHash(Md5);
+			//String Md5 = GetMD5FromJar.getMD5Checksum(gameJar.toString());
+			//gameVersion = GetVersionFromHash.getVersionFromHash(Md5);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
+		String version = readVersion();
+
+		if (version != null) {
+			try {
+				setGameVersion(Version.parse(version));
+			} catch (VersionParsingException e) {
+				e.printStackTrace();
+			}
+		}
 
 		return true;
-		
+	}
+
+	@Nullable
+	private String readVersion() {
+		VersionCaptureVisitor captureVisitor = new VersionCaptureVisitor();
+
+		try (ZipFile game = new ZipFile(gameJar.toFile())) {
+			setGameType(2);
+			ZipEntry entry = game.getEntry("minicraft/core/Game.class");
+			if (entry == null) entry = game.getEntry("minicraft/Game.class");
+			if (entry == null) {
+				entry = game.getEntry("com/mojang/ld22/GameControl.class");
+				setGameType(1);
+			}
+			if (entry == null) {
+				entry = game.getEntry("com/mojang/ld22/Game.class");
+				setGameType(0);
+			}
+			if (entry == null) return null;
+
+			InputStream stream = game.getInputStream(entry);
+			ClassReader reader = new ClassReader(stream);
+			reader.accept(captureVisitor, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		return captureVisitor.version;
 	}
 
 	@Override
 	public void initialize(FabricLauncher launcher) {
-		TRANSFORMER.locateEntrypoints(launcher, gameJar);
+		TRANSFORMER.locateEntrypoints(launcher, Collections.singletonList(gameJar));
 	}
 
 	@Override
@@ -253,6 +298,9 @@ public class MinicraftGameProvider implements GameProvider {
 			if (i + 1 < ret.length
 					&& arg.startsWith("--")
 					&& SENSITIVE_ARGS.contains(arg.substring(2).toLowerCase(Locale.ENGLISH))) {
+				if (arg.substring(2).equals("debug")) {
+					Log.shouldLog(LogLevel.DEBUG, LogCategory.GENERAL);
+				}
 				i++; // skip value
 			} else {
 				ret[writeIdx++] = arg;
@@ -278,7 +326,7 @@ public class MinicraftGameProvider implements GameProvider {
 		return Paths.get(arguments.getOrDefault("gameDir", "."));
 	}
 
-	public static void setGameVersion(StringVersion version) {
+	public static void setGameVersion(Version version) {
 		if (version != null) {
 			gameVersion = version;
 		}
@@ -288,12 +336,73 @@ public class MinicraftGameProvider implements GameProvider {
 		gameType = type;
 	}
 
-	private StringVersion getGameVersion() {
+	private Version getGameVersion() {
 		if (gameVersion != null) {
 			return gameVersion;
 		} else {
-			return new StringVersion("1.0.0");
+			return new StringVersion("0.0.0");
 		}
 	}
 
+	private static class VersionCaptureVisitor extends ClassVisitor {
+		String version;
+
+		public VersionCaptureVisitor() {
+			super(Opcodes.ASM9);
+		}
+
+		@Override
+		public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+			if (version == null && name.equals("VERSION") && value instanceof String) {
+				version = (String) value;
+			}
+
+			return super.visitField(access, name, descriptor, signature, value);
+		}
+
+		@Override
+		public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+			if (version != null || !name.equals("<clinit>")) {
+				return super.visitMethod(access, name, descriptor, signature, exceptions);
+			}
+
+			return new MethodVisitor(Opcodes.ASM9) {
+				int state;
+				String lastLdcString;
+
+				@Override
+				public void visitTypeInsn(int opcode, String type) {
+					if (version == null
+							&& state == 0
+							&& opcode == Opcodes.NEW
+							&& type.endsWith("/Version")) {
+						state = 1;
+					}
+				}
+
+				@Override
+				public void visitLdcInsn(Object value) {
+					if (value instanceof String) {
+						if (state == 1) {
+							version = (String) value;
+							state = 2;
+						} else {
+							lastLdcString = (String) value;
+						}
+					}
+				}
+
+				@Override
+				public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
+					if (version == null
+							&& opcode == Opcodes.PUTSTATIC
+							//&& (owner.equals("com/mojang/ld22/GameControl") || owner.contains("minicraft.") )
+							&& name.equals("VERSION")
+							&& lastLdcString != null) {
+						version = lastLdcString;
+					}
+				}
+			};
+		}
+	}
 }

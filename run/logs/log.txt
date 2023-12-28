@@ -1,0 +1,22 @@
+19:22:14.890 [Game Handler] DEBUG: Determined gameDir: /home/distant/.playminicraft/mods/Minicraft_Plus
+19:22:15.212 [Controller] DEBUG: No Controllers Detected, moving on.
+19:22:15.566 [Analytics] TRACE: Ping success for GameStartup, with value 1.
+19:22:15.817 [Sprite] DEBUG: Updating all LinkedSprite.
+19:22:15.818 [Resource Handler/Localization] TRACE: Loading language...
+19:22:15.836 [Resource Handler/Skin] DEBUG: Refreshing skins.
+19:22:15.848 [Tiles] DEBUG: Initializing tile list...
+19:22:16.003 [LOC] TRACE: en-US: 'Checking for updates...' is unlocalized.
+19:22:16.003 [LOC] TRACE: en-US: 'Play' is unlocalized.
+19:22:16.003 [LOC] TRACE: en-US: 'Options' is unlocalized.
+19:22:16.003 [LOC] TRACE: en-US: 'Mods' is unlocalized.
+19:22:16.003 [LOC] TRACE: en-US: 'Skins' is unlocalized.
+19:22:16.003 [LOC] TRACE: en-US: 'Achievements' is unlocalized.
+19:22:16.003 [LOC] TRACE: en-US: 'Help' is unlocalized.
+19:22:16.003 [LOC] TRACE: en-US: 'Quit' is unlocalized.
+19:22:16.006 [World] DEBUG: Resetting...
+19:22:16.012 [Resource Handler/Localization] TRACE: Loading language...
+19:22:16.014 [LOC] TRACE: en-US: 'minicraft.achievement.obsidianknight' is unlocalized.
+19:22:16.014 [Achievement] DEBUG: Updating data of achievement with id: minicraft.achievement.find_gem.
+19:22:16.014 [Achievement] DEBUG: Updating data of achievement with id: minicraft.achievement.airwizard.
+19:22:16.014 [Achievement] DEBUG: Updating data of achievement with id: minicraft.achievement.woodcutter.
+19:22:16.055 [Network] DEBUG: Fetching release list from GitHub...

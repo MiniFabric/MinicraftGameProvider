@@ -9,9 +9,6 @@ def ENV = System.getenv()
 repositories {
 	mavenCentral()
 	maven {
-		url "https://repo.spongepowered.org/maven/"
-	}
-	maven {
 		url "https://maven.fabricmc.net/"
 	}
 	maven {
@@ -27,19 +24,46 @@ group = "io.github.pseudodistant"
 archivesBaseName = "MinicraftGameProvider"
 
 dependencies {
-	implementation 'com.github.skeeto:Minicraft:21e7007696'
+	compileOnly 'com.github.skeeto:Minicraft:21e7007696'
 	compileOnly group: 'org.jetbrains', name: 'intellij-fernflower', version: '1.2.1.16'
-	compileOnly group: 'net.fabricmc', name: 'fabric-loader', version: '0.13.0'
+	implementation group: 'net.fabricmc', name: 'fabric-loader', version: '0.15.3'
 
 	//mixin requirements:
-	compileOnly 'org.spongepowered:mixin:' + mixinVersion
-	compileOnly 'com.google.guava:guava:21.0'
-	compileOnly group: 'com.google.code.gson', name: 'gson', version: '2.8.7'
-	compileOnly group: 'org.ow2.asm', name: 'asm', version: asmVersion
-	compileOnly group: 'org.ow2.asm', name: 'asm-analysis', version: asmVersion
-	compileOnly group: 'org.ow2.asm', name: 'asm-commons', version: asmVersion
-	compileOnly group: 'org.ow2.asm', name: 'asm-tree', version: asmVersion
-	compileOnly group: 'org.ow2.asm', name: 'asm-util', version: asmVersion
+	api("net.fabricmc:sponge-mixin:0.11.4+mixin.0.8.5") {
+		exclude module: 'launchwrapper'
+		exclude module: 'guava'
+	}
+	implementation 'com.google.guava:guava:21.0'
+	implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.7'
+	implementation group: 'org.ow2.asm', name: 'asm', version: asmVersion
+	implementation group: 'org.ow2.asm', name: 'asm-analysis', version: asmVersion
+	implementation group: 'org.ow2.asm', name: 'asm-commons', version: asmVersion
+	implementation group: 'org.ow2.asm', name: 'asm-tree', version: asmVersion
+	implementation group: 'org.ow2.asm', name: 'asm-util', version: asmVersion
+
+	api 'net.fabricmc:tiny-mappings-parser:0.3.0+build.17'
+	api 'net.fabricmc:tiny-remapper:0.8.2'
+	api 'net.fabricmc:access-widener:2.1.0'
+
+	implementation 'org.ow2.sat4j:org.ow2.sat4j.core:2.3.6'
+	implementation 'org.ow2.sat4j:org.ow2.sat4j.pb:2.3.6'
+
+	implementation 'org.tinylog:tinylog-api:2.4.1'
+	implementation 'org.tinylog:tinylog-impl:2.4.1'
+	implementation 'org.jetbrains:annotations:23.0.0'
+
+	implementation 'com.mashape.unirest:unirest-java:1.4.9'
+
+	implementation 'org.json:json:20220320'
+	//implementation 'com.konghq:unirest-java:3.13.10'
+	implementation 'com.badlogicgames.gdx:gdx:1.11.0'
+	implementation 'com.badlogicgames.gdx:gdx-box2d:1.11.0'
+	implementation 'com.badlogicgames.gdx:gdx-controllers:1.9.13'
+	implementation 'com.badlogicgames.jamepad:jamepad:2.0.20.0'
+
+	// Unit testing for mod metadata
+	implementation('org.junit.jupiter:junit-jupiter:5.8.2')
+
 
 }
 
@@ -85,10 +109,10 @@ publishing {
 	repositories {
 		if (ENV.MAVEN_PUBLISH_TOKEN) {
 			maven {
-				url 'https://maven.rewovenmc.tk/'
+				url 'https://repo.repsy.io/mvn/distant/minifabric/'
 				credentials {
-					username 'BobTheBuildSlave'
-					password ENV.MAVEN_PUBLISH_TOKEN
+					username 'distant'
+					password 'Ay2Dv7,E9seoubgHLKhiguj897y'
 				}
 				authentication {
 					basic(BasicAuthentication)

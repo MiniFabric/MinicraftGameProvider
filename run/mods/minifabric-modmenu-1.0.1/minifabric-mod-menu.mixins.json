@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.minifabric.minifabric_api.mixin",
+  "compatibilityLevel": "JAVA_16",
+  "mixins": [
+
+  ],
+  "client": [
+    "TitleDisplayMixin",
+    "MenuAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

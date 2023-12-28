@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "minifabric-mod-menu",
+  "name": "MiniFabric Mod Menu",
+  "description": "MiniFabric ModMenu, to display and configure mods!",
+  "version": "1.0.1",
+  "environment": "*",
+  "license": "Apache-2.0",
+  "icon": "assets/minifabric-modmenu/icon.png",
+  "contact": {
+    "homepage": "https://minifabric.github.io/",
+    "sources": "https://github.com/MiniFabric/MiniFabric_API",
+    "discord": "https://discord.gg/MsQdqe52yT",
+    "issues": "https://github.com/MiniFabric/MiniFabric_API/issues"
+  },
+  "authors": [
+    "MiniFabric",
+    "PseudoDistant"
+  ],
+  "mixins": [
+    "minifabric-mod-menu.mixins.json"
+  ],
+  "depends": {
+    "minicraftplus": [
+      "2.1.0-dev1",
+      "2.1.0-dev2",
+      "2.2.0-dev3"
+    ]
+  }
+}
