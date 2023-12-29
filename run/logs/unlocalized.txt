@@ -1,9 +1,0 @@
-[Localization.java#L49] [minicraft.core.io.Localization#getLocalized]:  en-US: 'Checking for updates...' is unlocalized.
-[Localization.java#L49] [minicraft.core.io.Localization#getLocalized]:  en-US: 'Play' is unlocalized.
-[Localization.java#L49] [minicraft.core.io.Localization#getLocalized]:  en-US: 'Options' is unlocalized.
-[Localization.java#L49] [minicraft.core.io.Localization#getLocalized]:  en-US: 'Mods' is unlocalized.
-[Localization.java#L49] [minicraft.core.io.Localization#getLocalized]:  en-US: 'Skins' is unlocalized.
-[Localization.java#L49] [minicraft.core.io.Localization#getLocalized]:  en-US: 'Achievements' is unlocalized.
-[Localization.java#L49] [minicraft.core.io.Localization#getLocalized]:  en-US: 'Help' is unlocalized.
-[Localization.java#L49] [minicraft.core.io.Localization#getLocalized]:  en-US: 'Quit' is unlocalized.
-[Localization.java#L49] [minicraft.core.io.Localization#getLocalized]:  en-US: 'minicraft.achievement.obsidianknight' is unlocalized.
