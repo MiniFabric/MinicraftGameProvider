@@ -56,7 +56,6 @@ public class MiniEntrypointPatch extends GamePatch {
                             if (f.cst instanceof String value) {
                                 if (value.contains("Minicraft Plus")) {
                                     method.instructions.set(i, new LdcInsnNode(value + " - Fabric"));
-                                    classEmitter.accept(mainClass);
                                 }
                             }
                         }
