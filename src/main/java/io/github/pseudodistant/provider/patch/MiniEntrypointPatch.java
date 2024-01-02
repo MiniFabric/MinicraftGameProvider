@@ -43,11 +43,27 @@ public class MiniEntrypointPatch extends GamePatch {
         Log.debug(LogCategory.GAME_PATCH, "Patching init method %s%s", initMethod.name, initMethod.desc);
         ListIterator<AbstractInsnNode> it = initMethod.instructions.iterator();
         it.add(new MethodInsnNode(Opcodes.INVOKESTATIC, MiniHooks.INTERNAL_NAME, "init", "()V", false));
+
+
+
         if (plusInitializer == null) {
             classEmitter.accept(mainClass);
         } else {
+            for (MethodNode method : plusInitializer.methods) {
+                if (method.name.equals("createAndDisplayFrame")) {
+                    for (AbstractInsnNode i : method.instructions) {
+                        if (i instanceof LdcInsnNode f) {
+                            if (f.cst instanceof String value) {
+                                if (value.contains("Minicraft Plus")) {
+                                    method.instructions.set(i, new LdcInsnNode(value + " - Fabric"));
+                                    classEmitter.accept(mainClass);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             classEmitter.accept(plusInitializer);
-
         }
     }
 }
